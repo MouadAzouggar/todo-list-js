@@ -15,43 +15,63 @@ function addTodo() {
     input.value = '';
     if (todoText === '') return;
 
+    createTodo({
+        text: todoText,
+        column: todo
+    });
+
+    // Save the todo items to local storage
+    saveTodoToLocalStorage();
+}
+
+function createTodo({text, column, id}) {
     // Create unique ID for the todo item
-    const todoId = 'todo_' + todoCount++;
+    const todoId = id || 'todo_' + todoCount++;
 
     // Create the todo elements
     const todoItem = document.createElement('div');
     todoItem.classList.add('todo-card');
     todoItem.setAttribute('id', todoId);
-    todoItem.textContent = todoText;
+    todoItem.textContent = text;
     todoItem.setAttribute('draggable', 'true');
 
     const deleteBtn = document.createElement('button');
     deleteBtn.classList.add('delete-btn');
 
     // Append elements to the todo list
-    todo.appendChild(todoItem);
+    column.appendChild(todoItem);
     todoItem.appendChild(deleteBtn);
+
+    // Add appropriate class to the todo item based on the target column
+    addClassBasedOnColumn(column, todoItem);
 
     // Add drag event listener to the todo item
     todoItem.addEventListener('dragstart', dragStart);
+
+    // Save the todo items to local storage
+    saveTodoToLocalStorage();
 
     console.log(todoItem);
 }
 
 // Function to delete todo items
 function deleteTodo(e) {
-        if (e.target.classList.contains('delete-btn')) {
-            e.target.parentElement.remove();
-            console.log('item deleted')
-        }
+    if (e.target.classList.contains('delete-btn')) {
+        const todoId = e.target.parentElement.id;
+        // Delete the todo item from the UI
+        e.target.parentElement.remove();
+        // Delete the todo items from local storage
+        deleteTodoFromLocalStorage(todoId);
+        console.log('item deleted')
+    }
 }
 
-addEventListener('click', function(e) {
+addEventListener('click', function (e) {
     deleteTodo(e)
 })
 
 // Function to handle drag start
-function dragStart(e){
+function dragStart(e) {
     // Transfer the todo item's ID as data
     e.dataTransfer.setData('text/plain', e.target.id);
 }
@@ -65,20 +85,20 @@ columns.forEach(column => {
 });
 
 // Function to handle drag over
-function dragOver(e){
+function dragOver(e) {
     e.preventDefault()
     // console.log('drag over');
 }
 
 // Function to handle drag enter
-function dragEnter(e){
+function dragEnter(e) {
     e.preventDefault()
     e.target.classList.add('drag-over');
     console.log('drag enter');
 }
 
 // Function to handle drag leave
-function dragLeave(e){
+function dragLeave(e) {
     e.target.classList.remove('drag-over');
     console.log('drag leave');
 }
@@ -97,7 +117,7 @@ function addClassBasedOnColumn(targetColumn, draggedTodo) {
 }
 
 // Function to handle drop
-function drop(e){
+function drop(e) {
     e.preventDefault();
     e.target.classList.remove('drag-over');
 
@@ -109,6 +129,9 @@ function drop(e){
 
     // Get the target column
     const targetColumn = e.target.closest('.status');
+
+    // Get the status of the target column
+    const targetStatus = targetColumn.id;
 
     // Get all todo items in the target column
     const todoItems = targetColumn.querySelectorAll('.todo-card');
@@ -123,9 +146,6 @@ function drop(e){
         }
     }
 
-    // Add appropriate class to the dragged todo item based on the target column
-    addClassBasedOnColumn(targetColumn, draggedTodo)
-
     // Insert the dragged todo item before the determined element
     if (insertBeforeElement) {
         targetColumn.insertBefore(draggedTodo, insertBeforeElement);
@@ -133,5 +153,77 @@ function drop(e){
         targetColumn.appendChild(draggedTodo);
     }
 
+    // Add appropriate class to the dragged todo item based on the target column
+    addClassBasedOnColumn(targetColumn, draggedTodo)
+
+    // Update the status of the dragged todo item in localStorage
+    UpdateTodoStatusInLocalStorage(todoId, targetStatus);
+
     console.log('item dropped');
 }
+
+// Function to update the status of the dragged todo item in localStorage
+function UpdateTodoStatusInLocalStorage(todoId, targetStatus) {
+    const todoItems = JSON.parse(localStorage.getItem('todoItems')) || [];
+    const index = todoItems.findIndex(todoItem => todoItem.id === todoId);
+    if (index !== -1) {
+
+        todoItems[index].status = targetStatus;
+        localStorage.setItem('todoItems', JSON.stringify(todoItems));
+        console.log('todo status updated in local storage');
+    } else {
+        console.log('todo item not found in local storage');
+    }
+}
+
+// Function to add todo items to local storage
+function saveTodoToLocalStorage() {
+    const todoItems = [];
+
+    columns.forEach(column => {
+        const status = column.id;
+        const todoCards = column.querySelectorAll('.todo-card');
+
+        todoCards.forEach(todoItem => {
+            const id = todoItem.id;
+            const text = todoItem.textContent.trim();
+            todoItems.push({ id, text, status });
+        });
+    });
+
+    localStorage.setItem('todoItems', JSON.stringify(todoItems));
+    console.log('todo items saved to local storage');
+}
+
+// Function to get todo items from local storage
+function getTodoFromLocalStorage() {
+    const todoItems = JSON.parse(localStorage.getItem('todoItems')) || [];
+    todoItems.forEach(todoItem => {
+        const column = document.querySelector(`#${todoItem.status}`);
+        if (column) {
+            createTodo({
+                text: todoItem.text,
+                column,
+                id: todoItem.id
+            });
+        }
+    });
+    console.log('todo items retrieved from local storage')
+}
+
+// Function to delete todo items from local storage
+function deleteTodoFromLocalStorage(todoId) {
+    const todoItems = JSON.parse(localStorage.getItem('todoItems')) || [];
+    const index = todoItems.findIndex(todoItem => todoItem.id === todoId);
+    if (index !== -1) {
+        todoItems.splice(index, 1);
+        // save the updated todo items to local storage
+        localStorage.setItem('todoItems', JSON.stringify(todoItems));
+        console.log('todo item deleted from local storage');
+    } else {
+        console.log('todo item not found in local storage');
+    }
+}
+
+// Get todo items from local storage when the page loads
+getTodoFromLocalStorage();
