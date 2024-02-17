@@ -18,9 +18,6 @@ function addTodo() {
     createTodo({
         text: todoText, column: todo
     });
-
-    // Save the todo items to local storage
-    saveTodoToLocalStorage();
 }
 
 function createTodo({text, column, id}) {
@@ -42,6 +39,8 @@ function createTodo({text, column, id}) {
     // Append elements to the todo list
     column.appendChild(todoItem);
 
+    // Save the todo items to local storage
+    saveTodoToLocalStorage();
 
     // Add appropriate class to the todo item based on the target column
     addClassBasedOnColumn(column, todoItem);
@@ -199,7 +198,8 @@ function saveTodoToLocalStorage() {
         todoCards.forEach((todoItem, index) => {
             const id = todoItem.id;
             const text = todoItem.textContent.trim();
-            todoItems.push({id, text, status, order: index});
+            const created_at = new Date().toISOString();
+            todoItems.push({id, text, status, order: index, created_at});
         });
     });
 
