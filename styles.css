@@ -123,7 +123,6 @@ h1 {
 
 .todo-archived {
     background-color: var(--clr-secondary);
-    /*box-shadow: 0 0 5px var(--clr-text);*/
 }
 
 .close, .delete-btn {
@@ -166,7 +165,6 @@ h1 {
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    /* Glass effect on background*/
     background: linear-gradient(rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0));
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
