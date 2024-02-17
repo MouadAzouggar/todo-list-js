@@ -317,6 +317,13 @@ function restoreTask(e) {
 
         // Remove todo item from modal
         e.target.parentElement.remove();
+
+        // Create the restored todo item in the UI
+        createTodo({
+            text: todoItems[index].text,
+            column: document.querySelector(`#${todoItems[index].status}`),
+            id: todoId
+        });
     }
 
     // Update localStorage
