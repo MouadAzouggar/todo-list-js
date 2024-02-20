@@ -21,6 +21,7 @@ function addTodo() {
 }
 
 function createTodo({text, column, id}) {
+    const todoItems = JSON.parse(localStorage.getItem('todoItems')) || [];
     // Create unique ID for the todo item
     const todoId = id || 'todo_' + todoCount++;
 
@@ -39,8 +40,9 @@ function createTodo({text, column, id}) {
     // Append elements to the todo list
     column.appendChild(todoItem);
 
-    // Save the todo items to local storage
-    saveTodoToLocalStorage();
+    // Update the todo items to local storage
+    todoItems.push({id: todoId, text, status: column.id, order: column.children.length - 1});
+    localStorage.setItem('todoItems', JSON.stringify(todoItems));
 
     // Add appropriate class to the todo item based on the target column
     addClassBasedOnColumn(column, todoItem);
@@ -62,14 +64,14 @@ function removeFromUI(e) {
         const targetColumn = e.target.closest('.status');
 
         if (targetColumn) {
-            // Delete the todo item from the UI
-            todoItem.remove();
-
             // Update todo status in local storage
             UpdateTodoStatusInLocalStorage(todoId, targetColumn.id);
 
             // Archive the todo item in local storage
             archive(todoId);
+
+            // Delete the todo item from the UI
+            todoItem.remove();
         } else {
             console.error('Target column is null');
         }
@@ -78,7 +80,10 @@ function removeFromUI(e) {
 
 // Event listener to remove todo items from UI
 addEventListener('click', function (e) {
-    removeFromUI(e)
+    if (e.target.classList.contains('delete-btn')) {
+        removeFromUI(e);
+        console.log('todo item deleted from UI')
+    }
 })
 
 // Function to handle drag start
@@ -144,9 +149,6 @@ function drop(e) {
     // Get the target column
     const targetColumn = e.target.closest('.status');
 
-    // Get the status of the target column
-    // const targetStatus = targetColumn.id;
-
     // Get all todo items in the target column
     const todoItems = targetColumn.querySelectorAll('.todo-card');
 
@@ -189,7 +191,7 @@ function UpdateTodoStatusInLocalStorage(todoId, targetStatus) {
 
 // Function to save todo items to local storage
 function saveTodoToLocalStorage() {
-    const todoItems = [];
+    const todoItems = JSON.parse(localStorage.getItem('todoItems')) || [];
 
     columns.forEach(column => {
         const status = column.id;
@@ -206,7 +208,7 @@ function saveTodoToLocalStorage() {
     localStorage.setItem('todoItems', JSON.stringify(todoItems));
 }
 
-// Function to get todo items from local storage
+// Function to get todo items from local storage and create them in the UI
 function getTodoFromLocalStorage() {
     const todoItems = JSON.parse(localStorage.getItem('todoItems')) || [];
     todoItems
@@ -229,10 +231,9 @@ function archive(todoId) {
         todoItems[index].status = 'archived';
         todoItems[index].deleted_at = new Date().toISOString() || null;
 
-        // Update local storage
-        localStorage.setItem('todoItems', JSON.stringify(todoItems));
         console.log('todo item archived', todoItems[index]);
     }
+    localStorage.setItem('todoItems', JSON.stringify(todoItems));
 }
 
 // Open Archive modal
@@ -244,6 +245,7 @@ function openArchiveModal() {
     modal.classList.add('modal');
     const modalContent = document.createElement('div');
     modalContent.classList.add('modal-content');
+    modalContent.setAttribute('id', 'archived')
     modalContent.classList.add('status');
     modal.appendChild(modalContent);
 
@@ -315,15 +317,15 @@ function restoreTask(e) {
 
         console.log('todo item restored', todoItems[index]);
 
-        // Remove todo item from modal
-        e.target.parentElement.remove();
-
         // Create the restored todo item in the UI
         createTodo({
             text: todoItems[index].text,
             column: document.querySelector(`#${todoItems[index].status}`),
             id: todoId
         });
+
+        // Remove todo item from modal
+        e.target.parentElement.remove();
     }
 
     // Update localStorage
