@@ -22,6 +22,7 @@ function addTodo() {
 
 function createTodo({text, column, id}) {
     const todoItems = JSON.parse(localStorage.getItem('todoItems')) || [];
+
     // Create unique ID for the todo item
     const todoId = id || 'todo_' + todoCount++;
 
@@ -40,16 +41,16 @@ function createTodo({text, column, id}) {
     // Append elements to the todo list
     column.appendChild(todoItem);
 
-    // Update the todo items to local storage
-    todoItems.push({id: todoId, text, status: column.id, order: column.children.length - 1});
-    localStorage.setItem('todoItems', JSON.stringify(todoItems));
-
     // Add appropriate class to the todo item based on the target column
     addClassBasedOnColumn(column, todoItem);
 
     // Add drag event listener to the todo item
     todoItem.addEventListener('dragstart', dragStart);
-    todoItem.addEventListener('dragend', dragEnd);
+    // todoItem.addEventListener('dragend', dragEnd);
+
+    // Update local storage
+    todoItems.push({id: todoId, text, status: column.id, order: column.children.length - 1, created_at: new Date().toISOString()});
+    localStorage.setItem('todoItems', JSON.stringify(todoItems));
 }
 
 // Function to remove todo items from UI
@@ -182,7 +183,7 @@ function UpdateTodoStatusInLocalStorage(todoId, targetStatus) {
     const index = todoItems.findIndex(todoItem => todoItem.id === todoId);
     if (index !== -1) {
         todoItems[index].status = targetStatus;
-        todoItems.sort((a, b) => a.order - b.order)
+        // todoItems.sort((a, b) => a.order - b.order)
         localStorage.setItem('todoItems', JSON.stringify(todoItems));
     } else {
         console.log('todo item not found in local storage');
@@ -200,8 +201,8 @@ function saveTodoToLocalStorage() {
         todoCards.forEach((todoItem, index) => {
             const id = todoItem.id;
             const text = todoItem.textContent.trim();
-            const created_at = new Date().toISOString();
-            todoItems.push({id, text, status, order: index, created_at});
+
+            todoItems.push({id, text, status, order: index});
         });
     });
 
@@ -211,6 +212,7 @@ function saveTodoToLocalStorage() {
 // Function to get todo items from local storage and create them in the UI
 function getTodoFromLocalStorage() {
     const todoItems = JSON.parse(localStorage.getItem('todoItems')) || [];
+    todo.innerHTML = '';
     todoItems
         .forEach(todoItem => {
             const column = document.querySelector(`#${todoItem.status}`);
