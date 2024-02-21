@@ -62,7 +62,6 @@ function createTodo({text, column, id}) {
         order: column.children.length - 2,
         created_at: new Date().toISOString()
     });
-    console.log('order', column.children.length - 2);
     localStorage.setItem('todoItems', JSON.stringify(todoItems));
 }
 
@@ -239,12 +238,12 @@ function saveTodoToLocalStorage() {
 function getTodoFromLocalStorage() {
     const todoItems = JSON.parse(localStorage.getItem('todoItems')) || [];
     const storedTodoItems = todoItems.filter(todoItem => todoItem.status !== 'archived');
-
+    
     if (storedTodoItems) {
         storedTodoItems.forEach(todoItem => {
+            const todoId = todoItem.id;
             const text = todoItem.text;
             const column = document.querySelector(`#${todoItem.status}`);
-            const todoId = todoItem.id;
             addStoredTodosToUI({
                 text, column, todoId
             });
@@ -271,6 +270,9 @@ function addStoredTodosToUI({text, column, todoId}) {
 
     // Add appropriate class to the todo item based on the target column
     addClassBasedOnColumn(column, storedItem);
+
+    // Add drag event listener to the todo item
+    storedItem.addEventListener('dragstart', dragStart);
 }
 
 // Function to Archive todo items in local storage
@@ -281,8 +283,6 @@ function archive(todoId) {
         // Add archived status to the todo item and deleted_at timestamp
         todoItems[index].status = 'archived';
         todoItems[index].deleted_at = new Date().toISOString() || null;
-
-        console.log('todo item archived', todoItems[index]);
     }
     localStorage.setItem('todoItems', JSON.stringify(todoItems));
 }
@@ -358,14 +358,11 @@ function restoreTask(e) {
     const todoItems = JSON.parse(localStorage.getItem('todoItems')) || [];
     const todoId = e.target.parentElement.id;
     const index = todoItems.findIndex(todoItem => todoItem.id === todoId);
-    // const targetStatus = 'todo';
 
     if (index !== -1) {
         // Remove archived status from the todo item and deleted_at timestamp
         todoItems[index].status = 'todo';
         todoItems[index].deleted_at = null;
-
-        console.log('todo item restored', todoItems[index]);
 
         // Create the restored todo item in the UI
         createTodo({
@@ -380,8 +377,6 @@ function restoreTask(e) {
 
     // Update localStorage
     localStorage.setItem('todoItems', JSON.stringify(todoItems));
-
-    console.log('Task restored', todoId);
 }
 
 // Get todo items from local storage when the page loads
