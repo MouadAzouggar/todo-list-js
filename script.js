@@ -4,9 +4,6 @@ const todo = document.querySelector('#todo');
 const columns = document.querySelectorAll('.status');
 const archiveBtn = document.querySelector('#archive_btn');
 
-// Counter for unique ID generation
-let todoCount = 0;
-
 button.addEventListener('click', addTodo);
 
 // Function to add todo items
@@ -23,8 +20,17 @@ function addTodo() {
 function createTodo({text, column, id}) {
     const todoItems = JSON.parse(localStorage.getItem('todoItems')) || [];
 
+    // Determine the todo item's ID
+    let maxId = 0;
+    todoItems.forEach(todoItem => {
+        const id = todoItem.id.split('_')[1];
+        if (id > maxId) {
+            maxId = id;
+        }
+    });
+
     // Create unique ID for the todo item
-    const todoId = id || 'todo_' + todoCount++;
+    const todoId = id || `todo_${++maxId}`;
 
     // Create the todo elements
     const todoItem = document.createElement('div');
@@ -46,10 +52,17 @@ function createTodo({text, column, id}) {
 
     // Add drag event listener to the todo item
     todoItem.addEventListener('dragstart', dragStart);
-    // todoItem.addEventListener('dragend', dragEnd);
+    todoItem.addEventListener('dragend', dragEnd);
 
     // Update local storage
-    todoItems.push({id: todoId, text, status: column.id, order: column.children.length - 1, created_at: new Date().toISOString()});
+    todoItems.push({
+        id: todoId,
+        text,
+        status: column.id,
+        order: column.children.length - 2,
+        created_at: new Date().toISOString()
+    });
+    console.log('order', column.children.length - 2);
     localStorage.setItem('todoItems', JSON.stringify(todoItems));
 }
 
@@ -95,7 +108,7 @@ function dragStart(e) {
 
 // Function to handle drag end
 function dragEnd() {
-    // Reorder the todo items in local storage
+    // sort the todo items in local storage (order, status)
     saveTodoToLocalStorage();
 }
 
@@ -118,11 +131,6 @@ function dragEnter(e) {
     e.target.classList.add('drag-over');
 }
 
-// Function to handle drag leave
-function dragLeave(e) {
-    e.target.classList.remove('drag-over');
-}
-
 // Function to add appropriate class to todo item based on target column
 function addClassBasedOnColumn(targetColumn, draggedTodo) {
     if (targetColumn.id === 'in_progress') {
@@ -134,6 +142,11 @@ function addClassBasedOnColumn(targetColumn, draggedTodo) {
     } else {
         draggedTodo.classList.remove('todo-in-progress', 'todo-completed');
     }
+}
+
+// Function to handle drag leave
+function dragLeave(e) {
+    e.target.classList.remove('drag-over');
 }
 
 // Function to handle drop
@@ -191,9 +204,11 @@ function UpdateTodoStatusInLocalStorage(todoId, targetStatus) {
 }
 
 // Function to save todo items to local storage
+// Function to save todo items to local storage
 function saveTodoToLocalStorage() {
     const todoItems = JSON.parse(localStorage.getItem('todoItems')) || [];
 
+    // Iterate over the columns to collect todo items
     columns.forEach(column => {
         const status = column.id;
         const todoCards = column.querySelectorAll('.todo-card');
@@ -202,26 +217,60 @@ function saveTodoToLocalStorage() {
             const id = todoItem.id;
             const text = todoItem.textContent.trim();
 
-            todoItems.push({id, text, status, order: index});
+            // Check if the todo item already exists in todoItems array
+            const existingIndex = todoItems.findIndex(item => item.id === id);
+
+            // If the todo item doesn't exist, add it to todoItems
+            if (existingIndex === -1) {
+                todoItems.push({ id, text, status, order: index });
+            } else {
+                // If the todo item exists, update its status and order
+                todoItems[existingIndex].status = status;
+                todoItems[existingIndex].order = index;
+            }
         });
     });
 
     localStorage.setItem('todoItems', JSON.stringify(todoItems));
 }
 
-// Function to get todo items from local storage and create them in the UI
+
+// Function to get todo items from local storage
 function getTodoFromLocalStorage() {
     const todoItems = JSON.parse(localStorage.getItem('todoItems')) || [];
-    todo.innerHTML = '';
-    todoItems
-        .forEach(todoItem => {
+    const storedTodoItems = todoItems.filter(todoItem => todoItem.status !== 'archived');
+
+    if (storedTodoItems) {
+        storedTodoItems.forEach(todoItem => {
+            const text = todoItem.text;
             const column = document.querySelector(`#${todoItem.status}`);
-            if (column) {
-                createTodo({
-                    text: todoItem.text, column, id: todoItem.id
-                });
-            }
+            const todoId = todoItem.id;
+            addStoredTodosToUI({
+                text, column, todoId
+            });
         });
+    }
+}
+
+// Function to create todo items from local storage
+function addStoredTodosToUI({text, column, todoId}) {
+    // Create the todo elements
+    const storedItem = document.createElement('div');
+    storedItem.classList.add('todo-card');
+    storedItem.setAttribute('id', todoId);
+    storedItem.textContent = text;
+    storedItem.setAttribute('draggable', 'true');
+
+    // Create the delete button
+    const deleteBtn = document.createElement('button');
+    deleteBtn.classList.add('delete-btn');
+    storedItem.appendChild(deleteBtn);
+
+    // Append elements to the todo list
+    column.appendChild(storedItem);
+
+    // Add appropriate class to the todo item based on the target column
+    addClassBasedOnColumn(column, storedItem);
 }
 
 // Function to Archive todo items in local storage
@@ -273,7 +322,6 @@ function closeModal() {
 
 // function to create todo items in modal
 function createArchivedTodos({text, id}) {
-    // const todoItems = JSON.parse(localStorage.getItem('todoItems')) || [];
     const modalContent = document.querySelector('.modal-content');
     const todoItem = document.createElement('div');
     todoItem.classList.add('todo-card');
