@@ -3,6 +3,7 @@ const button = document.querySelector('#add_btn');
 const todo = document.querySelector('#todo');
 const columns = document.querySelectorAll('.status');
 const archiveBtn = document.querySelector('#archive_btn');
+let modal = null;
 
 button.addEventListener('click', addTodo);
 
@@ -205,7 +206,6 @@ function UpdateTodoStatusInLocalStorage(todoId, targetStatus) {
 }
 
 // Function to save todo items to local storage
-// Function to save todo items to local storage
 function saveTodoToLocalStorage() {
     const todoItems = JSON.parse(localStorage.getItem('todoItems')) || [];
 
@@ -223,7 +223,7 @@ function saveTodoToLocalStorage() {
 
             // If the todo item doesn't exist, add it to todoItems
             if (existingIndex === -1) {
-                todoItems.push({ id, text, status, order: index });
+                todoItems.push({id, text, status, order: index});
             } else {
                 // If the todo item exists, update its status and order
                 todoItems[existingIndex].status = status;
@@ -240,7 +240,7 @@ function saveTodoToLocalStorage() {
 function getTodoFromLocalStorage() {
     const todoItems = JSON.parse(localStorage.getItem('todoItems')) || [];
     const storedTodoItems = todoItems.filter(todoItem => todoItem.status !== 'archived');
-    
+
     if (storedTodoItems) {
         storedTodoItems.forEach(todoItem => {
             const todoId = todoItem.id;
@@ -286,43 +286,70 @@ function archive(todoId) {
         todoItems[index].status = 'archived';
         todoItems[index].deleted_at = new Date().toISOString() || null;
     }
+    // Display todo items in the archive modal
+    createArchivedTodos({
+        text: todoItems[index].text, id: todoId
+    })
+
     localStorage.setItem('todoItems', JSON.stringify(todoItems));
 }
 
-// Open Archive modal
-archiveBtn.addEventListener('click', openArchiveModal);
+// Add event listener to create the modal
+archiveBtn.addEventListener('click', openModal);
 
-function openArchiveModal() {
+// Function to create modal
+function createModal() {
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.classList.add('modal');
+        modal.setAttribute('data-modal-open', 'true');
+
+        const closeBtn = document.createElement('span');
+        closeBtn.classList.add('close');
+        modal.appendChild(closeBtn);
+
+        // Add event listener to close the modal
+        closeBtn.addEventListener('click', closeModal);
+
+        archiveModal(modal);
+    }
+
+}
+
+// Function to close modal
+function closeModal() {
+    if(modal) {
+        modal.setAttribute('data-modal-open', 'false');
+        modal.classList.add('hide');
+    }
+}
+
+// Function to open modal
+function openModal() {
+    if(!modal) {
+        createModal();
+    }
+    modal.setAttribute('data-modal-open', 'true');
+    modal.classList.remove('hide');
+}
+
+// Function to create archive modal
+function archiveModal(modalContainer) {
     // Create the modal
-    const modal = document.createElement('div');
-    modal.classList.add('modal');
     const modalContent = document.createElement('div');
     modalContent.classList.add('modal-content');
     modalContent.setAttribute('id', 'archived')
     modalContent.classList.add('status');
-    modal.appendChild(modalContent);
-
-    const closeBtn = document.createElement('span');
-    closeBtn.classList.add('close');
-    modalContent.appendChild(closeBtn);
+    modalContainer.appendChild(modalContent);
 
     const h2 = document.createElement('h2');
     h2.textContent = 'Archived Tasks';
     modalContent.appendChild(h2);
-    document.body.appendChild(modal);
+    document.body.appendChild(modalContainer);
     getArchivedTodoFromLocalStorage();
-
-    // Add event listener to close the modal
-    closeBtn.addEventListener('click', closeModal);
 }
 
-// function to close modal
-function closeModal() {
-    const modal = document.querySelector('.modal');
-    modal.remove();
-}
-
-// function to create todo items in modal
+// Function to create todo items in modal
 function createArchivedTodos({text, id}) {
     const modalContent = document.querySelector('.modal-content');
     const todoItem = document.createElement('div');
@@ -343,7 +370,7 @@ function createArchivedTodos({text, id}) {
     restoreBtn.addEventListener('click', restoreTask);
 }
 
-// function to get archived todo items from local storage
+// Function to get archived todo items from local storage
 function getArchivedTodoFromLocalStorage() {
     const todoItems = JSON.parse(localStorage.getItem('todoItems')) || [];
     const archivedItems = todoItems.filter(todoItem => todoItem.status === 'archived');
@@ -355,7 +382,7 @@ function getArchivedTodoFromLocalStorage() {
     });
 }
 
-// function to restore task from archive (LocalStorage)
+// Function to restore task from archive (LocalStorage)
 function restoreTask(e) {
     const todoItems = JSON.parse(localStorage.getItem('todoItems')) || [];
     const todoId = e.target.parentElement.id;
