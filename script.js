@@ -24,6 +24,7 @@ function createTodo({text, column, id}) {
     let maxId = 0;
     todoItems.forEach(todoItem => {
         const id = todoItem.id.split('_')[1];
+        maxId = Math.max(maxId, id);
         if (id > maxId) {
             maxId = id;
         }
@@ -31,6 +32,7 @@ function createTodo({text, column, id}) {
 
     // Create unique ID for the todo item
     const todoId = id || `todo_${++maxId}`;
+
 
     // Create the todo elements
     const todoItem = document.createElement('div');
