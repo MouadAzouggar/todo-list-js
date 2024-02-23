@@ -289,12 +289,15 @@ function archive(todoId) {
         todoItems[index].status = 'archived';
         todoItems[index].deleted_at = new Date().toISOString() || null;
     }
-    // Display todo items in the archive modal
-    createArchivedTodos({
-        text: todoItems[index].text, id: todoId
-    })
 
     localStorage.setItem('todoItems', JSON.stringify(todoItems));
+
+    if (modal) {
+        // Display todo items in the archive modal
+        createArchivedTodos({
+            text: todoItems[index].text, id: todoId
+        })
+    }
 }
 
 // Add event listener to create the modal
