@@ -9,18 +9,19 @@
     <title>ToDo list app</title>
 </head>
 <body>
+<div id="search-container">
+    <input class="search-input" id="search" placeholder="Search..." type="text">
+    <div class="search-results" id="searchResults"></div>
+    <!--            <button id="search_btn">Search</button>-->
+</div>
+
 <h1>My TODO list</h1>
 <div class="container">
     <div class="form-input">
 
         <div id="input-container">
-        <input id="input" class="input" placeholder="Add a new task" type="text">
-        <button id="add_btn">Add task</button>
-        </div>
-
-        <div id="search-container">
-        <input type="text" id="search" class="input" placeholder="Search">
-        <button id="search_btn">Search</button>
+            <input class="input" id="input" placeholder="Add a new task" type="text">
+            <button id="add_btn">Add task</button>
         </div>
 
     </div>
