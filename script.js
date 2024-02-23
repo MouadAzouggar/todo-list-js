@@ -1,10 +1,11 @@
-const input = document.querySelector('#input');
-const addTodoBtn = document.querySelector('#add_btn');
-const todo = document.querySelector('#todo');
+const input = document.getElementById('input');
+const addTodoBtn = document.getElementById('add_btn');
+const todo = document.getElementById('todo');
 const columns = document.querySelectorAll('.status');
-const archiveBtn = document.querySelector('#archive_btn');
-const searchInput = document.querySelector('#search');
-const searchBtn = document.querySelector('#search_btn');
+const archiveBtn = document.getElementById('archive_btn');
+const searchInput = document.getElementById('search');
+const searchResults = document.getElementById('searchResults');
+// const searchBtn = document.getElementById('search_btn');
 
 let modal = null;
 
@@ -314,6 +315,13 @@ function createModal() {
         closeBtn.classList.add('close');
         modal.appendChild(closeBtn);
 
+        // Check if modal has content
+        if (modal.innerHTML.trim() !== '') {
+            modal.classList.add('has-content');
+        } else {
+            modal.classList.remove('has-content');
+        }
+
         // Add event listener to close the modal
         closeBtn.addEventListener('click', closeModal);
 
@@ -324,7 +332,7 @@ function createModal() {
 
 // Function to close modal
 function closeModal() {
-    if(modal) {
+    if (modal) {
         modal.setAttribute('data-modal-open', 'false');
         modal.classList.add('hide');
     }
@@ -332,7 +340,7 @@ function closeModal() {
 
 // Function to open modal
 function openModal() {
-    if(!modal) {
+    if (!modal) {
         createModal();
     }
     modal.setAttribute('data-modal-open', 'true');
@@ -349,6 +357,7 @@ function archiveModal(modalContainer) {
     modalContainer.appendChild(modalContent);
 
     const h2 = document.createElement('h2');
+    h2.style.color = 'var(--clr-progress)';
     h2.textContent = 'Archived Tasks';
     modalContent.appendChild(h2);
     document.body.appendChild(modalContainer);
@@ -415,25 +424,73 @@ function restoreTask(e) {
 }
 
 // Function to search for todo items in LocalStorage
-searchBtn.addEventListener('click', searchTodo);
-function searchTodo() {
-    const searchValue = searchInput.value.trim().toLowerCase();
+searchInput.addEventListener('input', function () {
+    const searchText = this.value.toLowerCase();
     const todoItems = JSON.parse(localStorage.getItem('todoItems')) || [];
-    const searchResults = todoItems.filter(todoItem => todoItem.text.toLowerCase().includes(searchValue));
+    const searchResults = todoItems.filter(todoItem => todoItem.text.toLowerCase().includes(searchText));
 
-    if (searchResults) {
-        columns.forEach(column => {
-            column.innerHTML = '';
-        });
+    displaySearchResults(searchResults);
+});
 
-        searchResults.forEach(todoItem => {
-            const column = document.querySelector(`#${todoItem.status}`);
-            addStoredTodosToUI({
-                text: todoItem.text, column, todoId: todoItem.id
-            });
+function displaySearchResults(results) {
+    searchResults.innerHTML = '';
+
+    if (results.length === 0) {
+        searchResults.textContent = 'No results found';
+        searchResults.style.display = 'block';
+    }
+
+    results.forEach(result => {
+        const todoItem = document.createElement('div');
+        todoItem.classList.add('result-item');
+
+        // Create span for the todo item text
+        const resultText = document.createElement('span');
+        resultText.classList.add('result-text');
+        resultText.textContent = result.text;
+        todoItem.appendChild(resultText);
+
+        // Create span for the todo item status
+        const resultStatus = document.createElement('span');
+        resultStatus.classList.add('result-status');
+        resultStatus.textContent = result.status;
+
+        // Assign background color to the status span
+        resultStatus.style.backgroundColor = getStatusColor(result.status);
+        todoItem.appendChild(resultStatus);
+
+
+        todoItem.addEventListener('click', function () {
+            searchInput.value = result.text;
+            searchResults.style.display = 'none';
         });
+        searchResults.appendChild(todoItem);
+    });
+}
+
+// Function to get status color
+function getStatusColor(status) {
+    if (status === 'todo') {
+        return 'var(--clr-background)';
+    } else if (status === 'in_progress') {
+        return 'var(--clr-progress)';
+    } else if (status === 'completed') {
+        return 'var(--clr-completed)';
+    } else {
+        return 'var(--clr-archived)';
     }
 }
+
+// Close dropdown when clicking outside
+document.addEventListener('click', function (event) {
+    if (!searchResults.contains(event.target) && event.target !== searchInput) {
+        searchResults.style.display = 'none';
+    } else {
+        searchResults.textContent = 'Type in the search box to search for todo items';
+        searchResults.style.display = 'block';
+    }
+
+});
 
 // Get todo items from local storage when the page loads
 getTodoFromLocalStorage();
