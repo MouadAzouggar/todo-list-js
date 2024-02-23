@@ -1,11 +1,14 @@
 const input = document.querySelector('#input');
-const button = document.querySelector('#add_btn');
+const addTodoBtn = document.querySelector('#add_btn');
 const todo = document.querySelector('#todo');
 const columns = document.querySelectorAll('.status');
 const archiveBtn = document.querySelector('#archive_btn');
+const searchInput = document.querySelector('#search');
+const searchBtn = document.querySelector('#search_btn');
+
 let modal = null;
 
-button.addEventListener('click', addTodo);
+addTodoBtn.addEventListener('click', addTodo);
 
 // Function to add todo items
 function addTodo() {
@@ -406,6 +409,27 @@ function restoreTask(e) {
 
     // Update localStorage
     localStorage.setItem('todoItems', JSON.stringify(todoItems));
+}
+
+// Function to search for todo items in LocalStorage
+searchBtn.addEventListener('click', searchTodo);
+function searchTodo() {
+    const searchValue = searchInput.value.trim().toLowerCase();
+    const todoItems = JSON.parse(localStorage.getItem('todoItems')) || [];
+    const searchResults = todoItems.filter(todoItem => todoItem.text.toLowerCase().includes(searchValue));
+
+    if (searchResults) {
+        columns.forEach(column => {
+            column.innerHTML = '';
+        });
+
+        searchResults.forEach(todoItem => {
+            const column = document.querySelector(`#${todoItem.status}`);
+            addStoredTodosToUI({
+                text: todoItem.text, column, todoId: todoItem.id
+            });
+        });
+    }
 }
 
 // Get todo items from local storage when the page loads

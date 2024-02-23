@@ -10,11 +10,21 @@
 </head>
 <body>
 <h1>My TODO list</h1>
-<div class="input-container">
+<div class="container">
     <div class="form-input">
-        <input id="input" placeholder="Add a new task" type="text">
+
+        <div id="input-container">
+        <input id="input" class="input" placeholder="Add a new task" type="text">
         <button id="add_btn">Add task</button>
+        </div>
+
+        <div id="search-container">
+        <input type="text" id="search" class="input" placeholder="Search">
+        <button id="search_btn">Search</button>
+        </div>
+
     </div>
+
     <button id="archive_btn">Archived Tasks</button>
 
 </div>
