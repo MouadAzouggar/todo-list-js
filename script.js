@@ -5,6 +5,7 @@ const columns = document.querySelectorAll('.status');
 const archiveBtn = document.getElementById('archive_btn');
 const searchInput = document.getElementById('search');
 const searchResults = document.getElementById('searchResults');
+const overlay = document.getElementById('overlay');
 // const searchBtn = document.getElementById('search_btn');
 
 let modal = null;
@@ -285,6 +286,7 @@ function addStoredTodosToUI({text, column, todoId}) {
 function archive(todoId) {
     const todoItems = JSON.parse(localStorage.getItem('todoItems')) || [];
     const index = todoItems.findIndex(todoItem => todoItem.id === todoId);
+
     if (index !== -1) {
         // Add archived status to the todo item and deleted_at timestamp
         todoItems[index].status = 'archived';
@@ -333,6 +335,7 @@ function createModal() {
 // Function to close modal
 function closeModal() {
     if (modal) {
+        overlay.style.display = 'none';
         modal.setAttribute('data-modal-open', 'false');
         modal.classList.add('hide');
     }
@@ -343,6 +346,7 @@ function openModal() {
     if (!modal) {
         createModal();
     }
+    overlay.style.display = 'block';
     modal.setAttribute('data-modal-open', 'true');
     modal.classList.remove('hide');
 }
